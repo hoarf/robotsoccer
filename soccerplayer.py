@@ -25,7 +25,8 @@ sc.connect(host, port)
 IA = {
     'dummy': lambda: random.uniform(-math.pi,math.pi),
     'ball_freak': lambda: sc.get_ball_angle(),
-    'fuzzy': lambda: fuzzy_ia.decide(sc.get_target_angle(), sc.get_ball_angle())
+    'fuzzy': lambda: fuzzy_ia.decide(math.degrees(sc.get_target_angle()),
+                                    math.degrees(sc.get_ball_angle()))
 }
 
 def angle_to_left_right_force(angle):

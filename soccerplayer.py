@@ -53,9 +53,8 @@ def angle_to_left_right_force(angle):
     return (math.cos(angle) - math.sin(angle), math.cos(angle)+math.sin(angle))
 
 def unicycle_model(angle):
-    angle = math.radians(angle)/4.0
-    print angle
-    return 0.5, 0.5+angle
+    print "Target angle: %s" % angle
+    return (angle+180.0)/720.0,(-angle+180.0)/720.0
 
 while True:
     ia_choice = IA[choice]()

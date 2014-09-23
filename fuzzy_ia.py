@@ -13,23 +13,35 @@ E_input = fuzz.trimf(n_domain, [-180, -180, 0])
 F_input = fuzz.trimf(n_domain, [-90, 0, 90])
 D_input = fuzz.trimf(n_domain, [0, 180, 180])
 
-E_output = fuzz.trimf(n_domain, [-180, -180, 0])
-F_output = fuzz.trimf(n_domain, [-180, 0, 180])
-D_output = fuzz.trimf(n_domain, [0, 180, 180])
+n_force_domain = np.arange(0,1,1.0/360.0)
+intensity_L = fuzz.trimf(n_force_domain, [0,0,0.5])
+intensity_H = fuzz.trimf(n_force_domain, [0.5,1,1])
 
-rel = lambda x1,x2: reduce(np.fmax,[
-        np.fmin(np.tile(np.min([E_input[x1],E_input[x2]]),SPAN),F_output),
-        np.fmin(np.tile(np.min([E_input[x1],F_input[x2]]),SPAN),E_output),
-        np.fmin(np.tile(np.min([E_input[x1],D_input[x2]]),SPAN),E_output),
-        np.fmin(np.tile(np.min([F_input[x1],E_input[x2]]),SPAN),D_output),
-        np.fmin(np.tile(np.min([F_input[x1],F_input[x2]]),SPAN),F_output),
-        np.fmin(np.tile(np.min([F_input[x1],D_input[x2]]),SPAN),E_output),
-        np.fmin(np.tile(np.min([D_input[x1],E_input[x2]]),SPAN),D_output),
-        np.fmin(np.tile(np.min([D_input[x1],F_input[x2]]),SPAN),D_output),
-        np.fmin(np.tile(np.min([D_input[x1],D_input[x2]]),SPAN),F_output)
+R_Left = lambda x1,x2: reduce(np.fmax,[
+    np.fmin(np.tile(np.min([E_input[x1],E_input[x2]]),360),intensity_L),
+    np.fmin(np.tile(np.min([E_input[x1],F_input[x2]]),360),intensity_L),
+    np.fmin(np.tile(np.min([E_input[x1],D_input[x2]]),360),intensity_L),
+    np.fmin(np.tile(np.min([F_input[x1],E_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([F_input[x1],F_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([F_input[x1],D_input[x2]]),360),intensity_L),
+    np.fmin(np.tile(np.min([D_input[x1],E_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([D_input[x1],F_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([D_input[x1],D_input[x2]]),360),intensity_H)
+])
+
+R_Right = lambda x1,x2: reduce(np.fmax,[
+    np.fmin(np.tile(np.min([E_input[x1],E_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([E_input[x1],F_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([E_input[x1],D_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([F_input[x1],E_input[x2]]),360),intensity_L),
+    np.fmin(np.tile(np.min([F_input[x1],F_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([F_input[x1],D_input[x2]]),360),intensity_H),
+    np.fmin(np.tile(np.min([D_input[x1],E_input[x2]]),360),intensity_L),
+    np.fmin(np.tile(np.min([D_input[x1],F_input[x2]]),360),intensity_L),
+    np.fmin(np.tile(np.min([D_input[x1],D_input[x2]]),360),intensity_L)
 ])
 
 def decide(target_angle, ball_angle):
-    target_angle = int(math.floor(target_angle))
-    ball_angle = int(math.floor(ball_angle))
-    return fuzz.defuzz(n_domain, rel(ball_angle,target_angle), 'centroid')
+  target_angle = int(math.floor(target_angle))
+  ball_angle = int(math.floor(ball_angle))
+  return fuzz.defuzz(n_force_domain, R_Left(ball_angle,target_angle), 'centroid'), fuzz.defuzz(n_force_domain, R_Right(ball_angle,target_angle), 'centroid')

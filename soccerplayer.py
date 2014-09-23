@@ -45,7 +45,7 @@ def target_angle():
 IA = {
     'dummy': lambda: angle_to_left_right_force(random.uniform(-math.pi,math.pi)),
     'ball_freak': lambda: angle_to_left_right_force(sc.get_ball_angle()),
-    'fuzzy': lambda: unicycle_model(fuzzy_ia.decide(target_angle(), ball_angle())),
+    'fuzzy': lambda: fuzzy_ia.decide(target_angle(), ball_angle()),
     'fixed': lambda: (.5,1)
 }
 

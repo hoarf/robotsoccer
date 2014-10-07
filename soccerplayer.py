@@ -12,40 +12,31 @@ def parse_host_port():
     parser.add_argument('--port', type=int, default=1024)
     parser.add_argument('--ia', default='dummy')
     args = parser.parse_args()
-    global choice
-    choice = args.ia
-    return args.host, args.port
+    return args.host, args.port, args.ia
 
-host, port = parse_host_port()
+host, port, choice = parse_host_port()
 print("Iniciando conexão com o host %s, na porta %s" %  (host,port))
 
 sc = SoccerClient()
 sc.connect(host, port)
 
-def normalize(angle):
-    if angle < -math.pi:
-        angle += 2*math.pi
-    elif angle > math.pi:
-        angle -= 2*math.pi
-    elif angle < -math.pi/2:
-        angle = -math.pi/2
-    elif angle > math.pi/2:
-        angle = math.pi/2
-    return angle
-
-
 def ball_angle():
-    n= math.degrees(normalize(sc.get_ball_angle()))
-    return n
+    "Numerical manibulations on ball angle"
+    return int(math.floor(math.degrees(sc.get_ball_angle())))
 
 def target_angle():
-    n=  math.degrees(normalize(sc.get_target_angle()))
-    return n
+    "Numerical manibulations on target angle"
+    return int(math.floor(math.degrees(sc.get_target_angle())))
+
+def spin():
+    "Numerical manibulations on vehicle spin"
+    print(sc.get_spin())
+    return int(math.floor(math.degrees(sc.get_spin())))
 
 IA = {
     'dummy': lambda: angle_to_left_right_force(random.uniform(-math.pi,math.pi)),
     'ball_freak': lambda: angle_to_left_right_force(sc.get_ball_angle()),
-    'fuzzy': lambda: fuzzy_ia.decide(target_angle(), ball_angle()),
+    'fuzzy': lambda: fuzzy_ia.next_action(target_angle(), ball_angle(), spin()),
     'fixed': lambda: (.5,1)
 }
 

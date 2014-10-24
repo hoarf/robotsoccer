@@ -18,33 +18,34 @@ intensity_L = fuzz.trimf(n_intensity_domain, [0,0,0.5])
 intensity_H = fuzz.trimf(n_intensity_domain, [0.5,1,1])
 
 R_Left = lambda ball_angle, target_angle, spin: reduce(np.fmax,[
-    np.fmin(np.tile(np.min([E_input[ball_angle],E_input[target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([E_input[ball_angle],F_input[target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([E_input[ball_angle],D_input[target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([F_input[ball_angle],E_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([F_input[ball_angle],F_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([F_input[ball_angle],D_input[target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([D_input[ball_angle],E_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([D_input[ball_angle],F_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([D_input[ball_angle],D_input[target_angle]]),360),intensity_H),
-    np.fmin(intensity_L[spin], intensity_H),
-    np.fmin(intensity_H[spin], intensity_L)
+    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_L),
+    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_L),
+    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_L),
+    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_L),
+    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_H)
+    # np.fmin(intensity_L[n_intensity_domain.searchsorted(spin)-1], intensity_H),
+    # np.fmin(intensity_H[n_intensity_domain.searchsorted(spin)-1], intensity_L)
 ])
 
 R_Right = lambda ball_angle, target_angle, spin: reduce(np.fmax,[
-    np.fmin(np.tile(np.min([E_input[ball_angle],E_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([E_input[ball_angle],F_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([E_input[ball_angle],D_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([F_input[ball_angle],E_input[target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([F_input[ball_angle],F_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([F_input[ball_angle],D_input[target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([D_input[ball_angle],E_input[target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([D_input[ball_angle],F_input[target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([D_input[ball_angle],D_input[target_angle]]),360),intensity_L),
-    np.fmin(intensity_L[spin], intensity_H),
-    np.fmin(intensity_H[spin], intensity_L)
-
+    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_L),
+    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_H),
+    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_L),
+    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_L),
+    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_L),
+    # np.fmin(intensity_L[n_intensity_domain.searchsorted(spin)-1], intensity_H)
+    # np.fmin(intensity_H[n_intensity_domain.searchsorted(spin)-1], intensity_L)
 ])
 
 def next_action(target_angle, ball_angle, spin):
-  return fuzz.defuzz(n_intensity_domain, R_Left(ball_angle,target_angle, spin), 'centroid'), fuzz.defuzz(n_intensity_domain, R_Right(ball_angle,target_angle, spin), 'centroid')
+    result = fuzz.defuzz(n_intensity_domain, R_Left(ball_angle,target_angle, spin), 'centroid'), fuzz.defuzz(n_intensity_domain, R_Right(ball_angle,target_angle, spin), 'centroid')
+    print("(%f,%f,%f)->(%f,%f)" % (target_angle, ball_angle, spin, result[0], result[1]))
+    return result

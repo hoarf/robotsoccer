@@ -30,8 +30,7 @@ def target_angle():
 
 def spin():
     "Numerical manibulations on vehicle spin"
-    print(sc.get_spin())
-    return int(math.floor(math.degrees(sc.get_spin())))
+    return abs(sc.get_spin())
 
 IA = {
     'dummy': lambda: angle_to_left_right_force(random.uniform(-math.pi,math.pi)),

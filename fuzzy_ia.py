@@ -1,51 +1,64 @@
-# coding:utf-8
+# coding: utf-8
 import random
 import numpy as np
 import skfuzzy as fuzz
 import math
 
-RESOLUTION = 1
-SPAN = 360/RESOLUTION
-n_domain = np.arange(-180,180,RESOLUTION)
-print(SPAN)
+RESOLUTION = 360.0
+angle_dmn = np.arange(-180,180,1)
+intensity_dmn = np.arange(0,1,1.0/RESOLUTION)
 
-E_input = fuzz.trimf(n_domain, [-180, -180, 0])
-F_input = fuzz.trimf(n_domain, [-90, 0, 90])
-D_input = fuzz.trimf(n_domain, [0, 180, 180])
+left_set = fuzz.trapmf(angle_dmn, [-180, -180, -100, 0])
+front_set = fuzz.trimf(angle_dmn, [-60, 0, 60])
+right_set = fuzz.trapmf(angle_dmn, [0, 100, 180, 180])
+v_low_set = fuzz.trapmf(intensity_dmn, [0, 0, .1, .3])
+v_high_set = fuzz.trapmf(intensity_dmn, [.7, .9, 1, 1])
+med_set = fuzz.trimf(intensity_dmn, [.3,.5,.7])
+low_set = fuzz.trimf(intensity_dmn, [.2,.3,.4])
+high_set = fuzz.trimf(intensity_dmn, [.6,.7,.8])
 
-n_intensity_domain = np.arange(0,1,1.0/360.0)
-intensity_L = fuzz.trimf(n_intensity_domain, [0,0,0.5])
-intensity_H = fuzz.trimf(n_intensity_domain, [0.5,1,1])
 
-R_Left = lambda ball_angle, target_angle, spin: reduce(np.fmax,[
-    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_H)
-    # np.fmin(intensity_L[n_intensity_domain.searchsorted(spin)-1], intensity_H),
-    # np.fmin(intensity_H[n_intensity_domain.searchsorted(spin)-1], intensity_L)
+def fuzzy_and(t, b, fuzzy_set):
+    candidates = []
+    if t: candidates.append(t)
+    if b: candidates.append(b)
+    if candidates:
+        return np.fmin(np.tile(np.min(candidates), RESOLUTION), fuzzy_set)
+    else:
+        np.tile(0.0, RESOLUTION)
+
+# left motor transfer function
+left_tf = lambda t, b, s: reduce(np.fmax,[
+    fuzzy_and(left_set[angle_dmn == b], left_set[angle_dmn == t], v_low_set),
+    fuzzy_and(left_set[angle_dmn == b], front_set[angle_dmn == t], v_low_set),
+    fuzzy_and(left_set[angle_dmn == b], right_set[angle_dmn == t], low_set),
+    fuzzy_and(front_set[angle_dmn == b], left_set[angle_dmn == t], low_set),
+    fuzzy_and(front_set[angle_dmn == b], front_set[angle_dmn == t], v_high_set),
+    fuzzy_and(front_set[angle_dmn == b], right_set[angle_dmn == t], high_set),
+    fuzzy_and(right_set[angle_dmn == b], left_set[angle_dmn == t], v_high_set),
+    fuzzy_and(right_set[angle_dmn == b], front_set[angle_dmn == t], v_high_set),
+    fuzzy_and(right_set[angle_dmn == b], right_set[angle_dmn == t], v_high_set)
 ])
 
-R_Right = lambda ball_angle, target_angle, spin: reduce(np.fmax,[
-    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([E_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([F_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_H),
-    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],E_input[n_domain == target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],F_input[n_domain == target_angle]]),360),intensity_L),
-    np.fmin(np.tile(np.min([D_input[n_domain == ball_angle],D_input[n_domain == target_angle]]),360),intensity_L),
-    # np.fmin(intensity_L[n_intensity_domain.searchsorted(spin)-1], intensity_H)
-    # np.fmin(intensity_H[n_intensity_domain.searchsorted(spin)-1], intensity_L)
+# right motor transfer function
+right_tf = lambda t, b, spin: reduce(np.fmax,[
+    fuzzy_and(left_set[angle_dmn == b], left_set[angle_dmn == t], v_high_set),
+    fuzzy_and(left_set[angle_dmn == b], front_set[angle_dmn == t], v_high_set),
+    fuzzy_and(left_set[angle_dmn == b], right_set[angle_dmn == t], v_high_set),
+    fuzzy_and(front_set[angle_dmn == b], left_set[angle_dmn == t], high_set),
+    fuzzy_and(front_set[angle_dmn == b], front_set[angle_dmn == t], v_high_set),
+    fuzzy_and(front_set[angle_dmn == b], right_set[angle_dmn == t], high_set),
+    fuzzy_and(right_set[angle_dmn == b], left_set[angle_dmn == t], v_low_set),
+    fuzzy_and(right_set[angle_dmn == b], front_set[angle_dmn == t], v_low_set),
+    fuzzy_and(right_set[angle_dmn == b], right_set[angle_dmn == t], v_low_set)
 ])
 
-def next_action(target_angle, ball_angle, spin):
-    result = fuzz.defuzz(n_intensity_domain, R_Left(ball_angle,target_angle, spin), 'centroid'), fuzz.defuzz(n_intensity_domain, R_Right(ball_angle,target_angle, spin), 'centroid')
-    print("(%f,%f,%f)->(%f,%f)" % (target_angle, ball_angle, spin, result[0], result[1]))
-    return result
+def next_action(t, b, s):
+    """
+       t: target angle
+       b: ball angle
+       s: spin
+    """
+    intensity_left = fuzz.defuzz(intensity_dmn, left_tf(t, b, s), 'dcentroid')
+    intensity_right = fuzz.defuzz(intensity_dmn, right_tf(t, b, s), 'dcentroid')
+    return intensity_left, intensity_right

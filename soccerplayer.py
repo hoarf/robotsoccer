@@ -8,31 +8,39 @@ from robotsoccer import SoccerClient
 
 
 def ball_angle():
-    "Numerical manipulations on ball angle"
+    """
+    Numerical manipulations on ball angle
+    """
     return -int(math.floor(math.degrees(sc.get_ball_angle())))
 
 
 def target_angle():
-    "Numerical manipulations on target angle"
+    """
+    Numerical manipulations on target angle
+    """
     return int(math.floor(math.degrees(sc.get_target_angle())))
 
 
 def int_repr(i):
+    """
+    String representation of force instensity
+    """
     return '*' * int(math.floor(i / .1))
 
 
 def angle_repr(angle):
+    """
+    String representation of angle
+    """
     if angle < 0: return '<'
     elif angle > 0: return '>'
     else: return '^'
 
 
-def spin():
-    "Numerical manipulations on vehicle spin"
-    return abs(sc.get_spin())
-
-
 def parse_host_port():
+    """
+    Command line argument parser
+    """
     parser = argparse.ArgumentParser(description="A robotsoccer player")
     parser.add_argument('--host', default='localhost')
     parser.add_argument('--port', type=int, default=1024)
@@ -42,10 +50,12 @@ def parse_host_port():
 
 
 def save_output(*data):
-  with open('output.csv', 'w') as f:
-      print (data)
-      csvwriter = csv.writer(f)
-      csvwriter.writerow(data)
+    """
+    Writes output to a file
+    """
+    with open('output.csv', 'w') as f:
+        csvwriter = csv.writer(f)
+        csvwriter.writerow(data)
 
 
 host, port, choice = parse_host_port()
@@ -53,6 +63,7 @@ print("Iniciando conexão com o host %s, na porta %s" %  (host,port))
 
 sc = SoccerClient()
 sc.connect(host, port)
+
 IA = {
     'fuzzy': lambda t, b, s: fuzzy_ia.next_action(t, b, s),
     'spin': lambda t, b, s: (2., -2.),
@@ -60,14 +71,18 @@ IA = {
     'crazy': lambda t, b, s: (1., 1.),
 }
 
+def print_info(l, r):
+    print("raw_target_angle: %f raw_ball_angle: %f" % (sc.get_target_angle(),
+                                                       sc.get_ball_angle()))
+    print("target_angle: %d ball_angle: %d left: %f right: %f" % (target_angle(),
+                                                                  ball_angle(),
+                                                                  l, r))
+    print("left: [%s], right: [%s]" % (int_repr(l), int_repr(r)))
+    print("target: [%s], ball: [%s]" % (angle_repr(target_angle()),
+          angle_repr(ball_angle())))
 
 while True:
-  ia_choice = IA[choice](target_angle(), ball_angle(), spin())
-  l, r = ia_choice
-  save_output(sc.get_target_angle(), sc.get_ball_angle())
-  save_output(target_angle(), ball_angle(), l, r)
-  save_output(angle_repr(target_angle()),
-              angle_repr(ball_angle()),
-              int_repr(l),
-              int_repr(r))
-  sc.act(l, r)
+    l, r = IA[choice](target_angle(), ball_angle(), None)
+    print_info(l,r)
+    save_output(target_angle(), ball_angle(), l ,r)
+    sc.act(l, r)

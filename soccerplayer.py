@@ -72,11 +72,10 @@ IA = {
 }
 
 def print_info(l, r):
-    print("raw_target_angle: %f raw_ball_angle: %f" % (sc.get_target_angle(),
-                                                       sc.get_ball_angle()))
-    print("target_angle: %d ball_angle: %d left: %f right: %f" % (target_angle(),
-                                                                  ball_angle(),
-                                                                  l, r))
+    print("raw_target_angle: %f raw_ball_angle: %f" %
+          (sc.get_target_angle(), sc.get_ball_angle()))
+    print("target_angle: %d ball_angle: %d left: %f right: %f" %
+          (target_angle(), ball_angle(), l, r))
     print("left: [%s], right: [%s]" % (int_repr(l), int_repr(r)))
     print("target: [%s], ball: [%s]" % (angle_repr(target_angle()),
           angle_repr(ball_angle())))
@@ -84,5 +83,5 @@ def print_info(l, r):
 while True:
     l, r = IA[choice](target_angle(), ball_angle(), None)
     print_info(l,r)
-    save_output(target_angle(), ball_angle(), l ,r)
+    # save_output(target_angle(), ball_angle(), l ,r)
     sc.act(l, r)

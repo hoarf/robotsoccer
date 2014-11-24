@@ -9,24 +9,17 @@ RESOLUTION = 360.0
 """
 The Linespaces used in the fuzzy sets
 
-    angle_dmn: angle domain of fuzzy sets
-    intensity_dmn: intensity of force domain of fuzzy sets
+    angle_dmn: angle in degrees domain of fuzzy sets
 """
 angle_dmn = np.arange(-180,180,1)
-intensity_dmn = np.arange(0,1,1.0/RESOLUTION)
 
 """
 Fuzzy Sets Declarations
 """
-left_set = fuzz.trapmf(angle_dmn, [-180, -180, -100, 0])
-front_set = fuzz.trimf(angle_dmn, [-60, 0, 60])
-right_set = fuzz.trapmf(angle_dmn, [0, 100, 180, 180])
-v_low_set = fuzz.trapmf(intensity_dmn, [0, 0, .1, .3])
-v_high_set = fuzz.trapmf(intensity_dmn, [.7, .9, 1, 1])
-med_set = fuzz.trimf(intensity_dmn, [.3,.5,.7])
-low_set = fuzz.trimf(intensity_dmn, [.2,.3,.4])
-high_set = fuzz.trimf(intensity_dmn, [.6,.7,.8])
-
+L  = fuzz.trapmf(angle_dmn, [-180, -180, -180, 0])
+F_narrow = fuzz.trimf(angle_dmn,  [-100, 0, 100])
+F = fuzz.trimf(angle_dmn, [-180, 0, 180])
+R = fuzz.trapmf(angle_dmn, [0, 180, 180, 180])
 
 def fuzzy_and(t, b, fuzzy_set):
     """
@@ -39,44 +32,32 @@ def fuzzy_and(t, b, fuzzy_set):
     if candidates:
         return np.fmin(np.tile(np.min(candidates), RESOLUTION), fuzzy_set)
     else:
-        np.tile(0.0, RESOLUTION)
+        np.tile(.0, RESOLUTION)
 
 """
-Left Motor Transfer Function
+Output angle's transfer function
 """
-left_tf = lambda t, b, s: reduce(np.fmax,[
-    fuzzy_and(left_set[angle_dmn == b], left_set[angle_dmn == t], v_low_set),
-    fuzzy_and(left_set[angle_dmn == b], front_set[angle_dmn == t], v_low_set),
-    fuzzy_and(left_set[angle_dmn == b], right_set[angle_dmn == t], v_high_set),
-    fuzzy_and(front_set[angle_dmn == b], left_set[angle_dmn == t], v_high_set),
-    fuzzy_and(front_set[angle_dmn == b], front_set[angle_dmn == t], v_high_set),
-    fuzzy_and(front_set[angle_dmn == b], right_set[angle_dmn == t], v_high_set),
-    fuzzy_and(right_set[angle_dmn == b], left_set[angle_dmn == t], v_low_set),
-    fuzzy_and(right_set[angle_dmn == b], front_set[angle_dmn == t], v_high_set),
-    fuzzy_and(right_set[angle_dmn == b], right_set[angle_dmn == t], v_high_set)
-])
-
-"""
-Right Motor Transfer Function
-"""
-right_tf = lambda t, b, spin: reduce(np.fmax, [
-    fuzzy_and(left_set[angle_dmn == b], left_set[angle_dmn == t], v_high_set),
-    fuzzy_and(left_set[angle_dmn == b], front_set[angle_dmn == t], v_high_set),
-    fuzzy_and(left_set[angle_dmn == b], right_set[angle_dmn == t], v_low_set),
-    fuzzy_and(front_set[angle_dmn == b], left_set[angle_dmn == t], v_high_set),
-    fuzzy_and(front_set[angle_dmn == b], front_set[angle_dmn == t], v_high_set),
-    fuzzy_and(front_set[angle_dmn == b], right_set[angle_dmn == t], v_low_set),
-    fuzzy_and(right_set[angle_dmn == b], left_set[angle_dmn == t], v_high_set),
-    fuzzy_and(right_set[angle_dmn == b], front_set[angle_dmn == t], v_low_set),
-    fuzzy_and(right_set[angle_dmn == b], right_set[angle_dmn == t], v_low_set)
+output_function = lambda t, b, s: reduce(np.fmax,[
+    fuzzy_and(L[angle_dmn == b],        L[angle_dmn == t],        F),
+    fuzzy_and(L[angle_dmn == b],        F_narrow[angle_dmn == t], L),
+    fuzzy_and(L[angle_dmn == b],        R[angle_dmn == t],        L),
+    fuzzy_and(F_narrow[angle_dmn == b], L[angle_dmn == t],        R),
+    fuzzy_and(F_narrow[angle_dmn == b], F_narrow[angle_dmn == t], F),
+    fuzzy_and(F_narrow[angle_dmn == b], R[angle_dmn == t],        L),
+    fuzzy_and(R[angle_dmn == b],        L[angle_dmn == t],        R),
+    fuzzy_and(R[angle_dmn == b],        F_narrow[angle_dmn == t], R),
+    fuzzy_and(R[angle_dmn == b],        R[angle_dmn == t],        F)
 ])
 
 def next_action(t, b, s):
     """
-       t: target angle
-       b: ball angle
-       s: spin
+    ¦  t: target angle
+    ¦  b: ball angle
+    ¦  s: spin
     """
-    intensity_left = fuzz.defuzz(intensity_dmn, left_tf(t, b, s), 'centroid')
-    intensity_right = fuzz.defuzz(intensity_dmn, right_tf(t, b, s), 'centroid')
-    return intensity_left, intensity_right
+    output = fuzz.defuzz(angle_dmn, output_function(t, b, s), 'centroid')
+    outputrad = math.radians(output)
+    cos_output = math.cos(outputrad)
+    sin_output = math.sin(outputrad)
+    return cos_output, sin_output
+

@@ -22,7 +22,7 @@ Se quiser executar o notebook vai precisar dos seguintes requerimentos extras:
 # Uso básico
 
 ```
-$ python soccerplayer
+$ python soccerplayer.py
 ```
 
 ## Parametros

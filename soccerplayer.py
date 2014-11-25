@@ -3,6 +3,7 @@ import argparse
 import math
 import random
 import fuzzy_ia
+import neural_ia
 import csv
 from robotsoccer import SoccerClient
 
@@ -44,7 +45,7 @@ def parse_host_port():
     parser = argparse.ArgumentParser(description="A robotsoccer player")
     parser.add_argument('--host', default='localhost')
     parser.add_argument('--port', type=int, default=1024)
-    parser.add_argument('--ia', default='fuzzy')
+    parser.add_argument('--ia', default='fuzzy', choices=['fuzzy', 'neural'])
     args = parser.parse_args()
     return args.host, args.port, args.ia
 
@@ -69,6 +70,7 @@ IA = {
     'spin': lambda t, b, s: (2., -2.),
     'str8': lambda t, b, s: (0., 0.),
     'crazy': lambda t, b, s: (1., 1.),
+    'neural': lambda t, b, s: neural_ia.next_action(t, b, s)
 }
 
 def print_info(l, r):

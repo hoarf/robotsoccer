@@ -28,6 +28,9 @@ $ python soccerplayer
 ## Parametros
 
   --ia: Seleciona a IA do jogador ('fuzzy' ou 'neural', default: fuzzy)
+
   --port N: especifica o número da porta (default: 1024)
+
   --host <host>: espeficia o host (default: localhost)
+
   --help: Mostra a ajuda
